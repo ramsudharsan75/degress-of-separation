@@ -1,3 +1,4 @@
+
 import csv
 import sys
 
@@ -88,53 +89,45 @@ def shortest_path(source, target):
     """
     Returns the shortest list of (movie_id, person_id) pairs
     that connect the source to the target.
-
     If no possible path, returns None.
     """
-    node = {
-        'state': source,
-        'parent': None,
-        'action': None
-    }
-    frontier = [node]
-    explored_states = set()
 
-    if node['state'] == target:
-        return []
+    # Initialize frontier and add "source" as the first node
+    start = Node(state=source, parent=None, action=None)
+    frontier = QueueFrontier()
+    frontier.add(start)
 
-    # Breadth-First Search
+    # Initialize an empty explored set
+    explored = set()
+
+    # Keep looping until solution found
     while True:
 
-        if len(frontier) == 0:
+        # If frontier is empty, then no path
+        if frontier.empty():
             return None
 
-        node = frontier[0]
-        frontier = frontier[1:]
-        explored_states.add(node['state'])
+        # Choose a node from the frontier
+        node = frontier.remove()
 
-        for action, state in neighbors_for_person(node['state']):
-            new_node = {
-                'parent': node,
-                'state': state,
-                'action': action
-            }
+        # Mark node as explored
+        explored.add(node.state)
 
-            if new_node['state'] == target:
-                solution = []
-                while node['parent'] is not None:
-                    solution.append((
-                        node['action'],
-                        node['state']
-                    ))
-                    node = node['parent']
-                solution.reverse()
-                return solution
+        # Add neighbors to frontier
+        for action, state in neighbors_for_person(node.state):
+            if not frontier.contains_state(state) and state not in explored:
+                child = Node(state=state, parent=node, action=action)
 
-            if new_node['state'] not in explored_states and \
-                    not any(new_node['state'] == node['state'] for node in frontier):
-                frontier.append(new_node)
+                # If child is the goal, then we have a solution
+                if child.state == target:
+                    path = []
+                    while child.parent is not None:
+                        path.insert(0, (child.action, child.state))
+                        child = child.parent
 
-    raise NotImplementedError
+                    return path
+                else:
+                    frontier.add(child)
 
 
 def person_id_for_name(name):
